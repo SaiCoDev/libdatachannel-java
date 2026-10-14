@@ -42,6 +42,42 @@ static void RTC_API incoming_request(int listener, const rtcIceUdpMuxRequest* re
     }
 }
 
+extern "C" JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_IceUdpMuxListener_setProxyProtocolNative(
+        JNIEnv* env, jclass clazz, jstring address, const jint port, jobjectArray proxies) {
+    const jsize count = env->GetArrayLength(proxies);
+    std::vector<std::string> owned;
+    owned.reserve(count);
+    for (jsize i = 0; i < count; ++i) {
+        auto entry = static_cast<jstring>(env->GetObjectArrayElement(proxies, i));
+        const char* chars = entry != nullptr ? env->GetStringUTFChars(entry, nullptr) : nullptr;
+        if (chars == nullptr) {
+            if (entry != nullptr) {
+                env->DeleteLocalRef(entry);
+            }
+            return RTC_ERR_INVALID;
+        }
+        owned.emplace_back(chars);
+        env->ReleaseStringUTFChars(entry, chars);
+        env->DeleteLocalRef(entry);
+    }
+    std::vector<const char*> entries;
+    entries.reserve(owned.size());
+    for (const auto& proxy : owned) {
+        entries.push_back(proxy.c_str());
+    }
+    // A null address matches peers that leave theirs unset
+    const char* host = address != nullptr ? env->GetStringUTFChars(address, nullptr) : nullptr;
+    if (address != nullptr && host == nullptr) {
+        return RTC_ERR_FAILURE;
+    }
+    const int result = rtcSetIceUdpMuxProxyProtocol(host, static_cast<uint16_t>(port), entries.data(),
+                                                    static_cast<int>(entries.size()));
+    if (host != nullptr) {
+        env->ReleaseStringUTFChars(address, host);
+    }
+    return result;
+}
+
 extern "C" JNIEXPORT jlong JNICALL Java_tel_schich_libdatachannel_IceUdpMuxListener_openNative(
         JNIEnv* env, jobject self, jstring address, const jint port, const jint maxPending, const jint timeoutMs) {
     const auto mux = static_cast<ice_mux*>(calloc(1, sizeof(ice_mux)));

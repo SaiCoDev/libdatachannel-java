@@ -73,6 +73,39 @@ public final class NativeTransportProbe {
         directPeer(certificate, key, fingerprint);
         admission();
         wildcardShare();
+        proxyProtocol();
+    }
+
+    /** A wildcard listener reads a listed relay's PROXY v2 header and sees the client it declares. */
+    static void proxyProtocol() throws Exception {
+        InetAddress any = InetAddress.getByName("0.0.0.0");
+        BlockingQueue<IceUdpMuxListener.Request> requests = new LinkedBlockingQueue<>();
+        try (IceUdpMuxListener mux = new IceUdpMuxListener(any, PORT, Runnable::run, request -> {
+                requests.add(request); return CompletableFuture.completedFuture(null);
+             });
+             DatagramSocket relay = new DatagramSocket(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0))) {
+            IceUdpMuxListener.setProxyProtocol(any, PORT, List.of("127.0.0.1"));
+            try {
+                byte[] packet = proxied(binding("relayedProbeUfrag", SERVER_PASSWORD), "203.0.113.7", 40123);
+                relay.send(new DatagramPacket(packet, packet.length, InetAddress.getByName("127.0.0.1"), PORT));
+                IceUdpMuxListener.Request request = requests.poll(5, TimeUnit.SECONDS);
+                check(request != null && request.remoteAddress().equals("203.0.113.7") && request.remotePort() == 40123,
+                    "the relayed request carries the declared client");
+            } finally {
+                IceUdpMuxListener.setProxyProtocol(any, PORT, List.of());
+            }
+        }
+        System.out.println("native-transport PASS proxyProtocol=declaredClient");
+    }
+
+    /** A PROXY v2 header for a UDP datagram from {@code client}, as a relay sends it. */
+    static byte[] proxied(byte[] payload, String client, int port) throws Exception {
+        ByteBuffer packet = ByteBuffer.allocate(16 + 12 + payload.length);
+        packet.put(new byte[] {0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A});
+        packet.put((byte) 0x21).put((byte) 0x12).putShort((short) 12);
+        packet.put(InetAddress.getByName(client).getAddress()).put(InetAddress.getByName("127.0.0.1").getAddress());
+        packet.putShort((short) port).putShort((short) PORT);
+        return packet.put(payload).array();
     }
 
     /** A wildcard listener and wildcard or unbound peers on its port share one socket, so no peer fails to bind. */
