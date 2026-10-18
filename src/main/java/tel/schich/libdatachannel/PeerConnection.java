@@ -500,6 +500,18 @@ public class PeerConnection implements Closeable {
     }
 
     /**
+     * Retrieves why this connection closed. Read it as soon as the state changes: it is recorded before the
+     * change is reported, and the connection cannot be asked once it is deleted.
+     *
+     * @return the reason, {@link CloseReason#RTC_CLOSE_REASON_NONE} while the connection is open
+     */
+    public CloseReason closeReason() {
+        final int reason = wrapError("rtcGetCloseReason", LibDataChannelNative.rtcGetCloseReason(peerHandle));
+        final CloseReason known = CloseReason.of(reason);
+        return known != null ? known : CloseReason.RTC_CLOSE_REASON_TRANSPORT_FAILED;
+    }
+
+    /**
      * Retrieves what the underlying SCTP association reports about itself.
      *
      * @return the association's stats, empty until it is connected

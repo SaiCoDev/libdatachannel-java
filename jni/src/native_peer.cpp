@@ -348,6 +348,11 @@ JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGe
     return rtcGetRtt(peerHandle);
 }
 
+JNIEXPORT jint JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetCloseReason(JNIEnv* env, jclass clazz,
+                                                                                             const jint peerHandle) {
+    return rtcGetCloseReason(peerHandle);
+}
+
 JNIEXPORT jobject JNICALL Java_tel_schich_libdatachannel_LibDataChannelNative_rtcGetSctpStats(JNIEnv* env,
                                                                                              jclass clazz,
                                                                                              const jint peerHandle) {

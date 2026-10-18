@@ -398,8 +398,16 @@ public final class NativeTransportProbe {
                 long[] stats = mux.stats();
                 check(notifications.get() == 1 && stats[5] == 1 && stats[2] == 1 && stats[3] == 1 && stats[0] > 10,
                     "transport traffic stays native after one admission callback");
+                PeerConnection accepted = host;
+                check(accepted.closeReason() == CloseReason.RTC_CLOSE_REASON_NONE, "an open connection has no close reason");
+                client.closeAsync();
+                check(client.closeReason() == CloseReason.RTC_CLOSE_REASON_LOCAL, "closing records a local close");
+                await(() -> accepted.closeReason() != CloseReason.RTC_CLOSE_REASON_NONE, "the host learns the client closed");
+                CloseReason remote = accepted.closeReason();
+                check(remote == CloseReason.RTC_CLOSE_REASON_REMOTE_SHUTDOWN || remote == CloseReason.RTC_CLOSE_REASON_REMOTE_ABORT,
+                    "a client close reads as remote on the host, got " + remote);
                 System.out.println("native-transport PASS ufragChars=" + ufragLength + " admissionCallbacks=1 duplicates=" + stats[6] +
-                    " datagrams=" + stats[0] + " channels=2 messages=402 " + sctp);
+                    " datagrams=" + stats[0] + " channels=2 messages=402 " + sctp + " hostCloseReason=" + remote);
             }
         } finally { if (host != null) check(host.closeAndAwait(Duration.ofSeconds(5)), "accepted peer native cleanup"); }
     }
