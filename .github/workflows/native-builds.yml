@@ -181,6 +181,45 @@ jobs:
             java -Xcheck:jni -cp "build/native-smoke/*:build/native-smoke/classes" \
               tel.schich.libdatachannel.NativeLibrarySmoke "$CLASSIFIER" "$mode"
           done
+      - name: Check glibc native runtime requirements
+        if: matrix.libc == 'glibc'
+        env:
+          NATIVE: build/dockcross/${{ matrix.directory }}/native/${{ matrix.library }}
+        run: |
+          # EL9 (RHEL, Oracle, Rocky, Alma 9) ships glibc 2.34 and the GCC 11 runtime
+          objdump -p "$NATIVE" | grep NEEDED
+          if objdump -p "$NATIVE" | grep -E 'NEEDED.*libstdc\+\+'; then
+            echo "::error::$NATIVE must not depend on a shared libstdc++"
+            exit 1
+          fi
+          check_newest() {
+            prefix="$1"
+            limit="$2"
+            newest="$(objdump -T "$NATIVE" | grep -o "${prefix}_[0-9.]*" | sort -uV | tail -n1)"
+            echo "Newest $prefix symbol version: ${newest:-none}"
+            if [ -n "$newest" ] && [ "$(printf '%s\n' "$limit" "$newest" | sort -V | tail -n1)" != "$limit" ]; then
+              objdump -T "$NATIVE" | grep -F "$newest"
+              echo "::error::$NATIVE needs $newest, newer than EL9's $limit"
+              exit 1
+            fi
+          }
+          check_newest GLIBC GLIBC_2.34
+          check_newest GLIBCXX GLIBCXX_3.4.29
+          check_newest GCC GCC_11
+      - name: Load glibc bundle in an EL9 JVM
+        if: matrix.libc == 'glibc'
+        env:
+          CLASSIFIER: ${{ matrix.classifier }}
+          PLATFORM: linux/${{ matrix.platform }}
+        run: |
+          docker run --rm --platform "$PLATFORM" -v "$PWD:/work:ro" -w /work \
+            -e CLASSIFIER oraclelinux:9 sh -ec '
+              dnf install -y -q java-17-openjdk-headless openssl-libs
+              for mode in lazy eager; do
+                java -Xcheck:jni -cp "build/native-smoke/*:build/native-smoke/classes" \
+                  tel.schich.libdatachannel.NativeLibrarySmoke "$CLASSIFIER" "$mode"
+              done
+            '
       - name: Load musl bundle in an Alpine JVM
         if: matrix.libc == 'musl'
         env:

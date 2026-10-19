@@ -13,6 +13,7 @@ esac
 cmake -S jni -B "build/dockcross/$TARGET_CLASSIFIER/native" \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DCMAKE_BUILD_TYPE="$PROJECT_BUILD_TYPE" \
-    -DPROJECT_VERSION="$PROJECT_VERSION"
+    -DPROJECT_VERSION="$PROJECT_VERSION" \
+    -DSTATIC_LIBSTDCXX=ON
 cmake --build "build/dockcross/$TARGET_CLASSIFIER/native" \
     --target datachannel-java --parallel "$JOBS"

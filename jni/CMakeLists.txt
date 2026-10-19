@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 option(PROJECT_VERSION "The version of the project" "unspecified")
 option(ENABLE_HARDENING "Enable compiler/linker hardening flags" ON)
+option(STATIC_LIBSTDCXX "Link libstdc++ and libgcc statically on Linux" OFF)
 
 set(NO_WEBSOCKET ON CACHE BOOL "configure libdatachannel build")
 set(NO_TESTS ON CACHE BOOL "configure libdatachannel build")
@@ -72,6 +73,12 @@ if(TRANSPORT_TEARDOWN_TESTS)
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_options(datachannel-java PRIVATE -Wl,--no-undefined)
+    if(STATIC_LIBSTDCXX)
+        # Bundle the C++ runtime so the library loads on distributions with an older libstdc++
+        # than the build host (e.g. EL9 stops at GLIBCXX_3.4.29), and keep its symbols private.
+        # libgcc stays shared: GCC 12's static unwinder needs _dl_find_object from glibc 2.35.
+        target_link_options(datachannel-java PRIVATE -static-libstdc++ -Wl,--exclude-libs,ALL)
+    endif()
 endif()
 # Debug info is several times the size of the code itself and is of no use in a shipped binary.
 # The exported JNI symbols live in the dynamic symbol table, which stripping leaves alone.
