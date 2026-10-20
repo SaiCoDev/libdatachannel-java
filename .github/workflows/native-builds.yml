@@ -181,6 +181,19 @@ jobs:
             java -Xcheck:jni -cp "build/native-smoke/*:build/native-smoke/classes" \
               tel.schich.libdatachannel.NativeLibrarySmoke "$CLASSIFIER" "$mode"
           done
+      - name: Check macOS native minimum version
+        if: matrix.family == 'macos'
+        env:
+          NATIVE: build/dockcross/${{ matrix.directory }}/native/${{ matrix.library }}
+        run: |
+          # CMAKE_OSX_DEPLOYMENT_TARGET in jni/CMakeLists.txt
+          limit=11.0
+          minos="$(otool -l "$NATIVE" | awk '$1 == "minos" { print $2; exit }')"
+          echo "Minimum macOS: ${minos:-unknown}"
+          if [ "$minos" != "$limit" ]; then
+            echo "::error::$NATIVE needs macOS ${minos:-unknown}, expected $limit"
+            exit 1
+          fi
       - name: Check glibc native runtime requirements
         if: matrix.libc == 'glibc'
         env:

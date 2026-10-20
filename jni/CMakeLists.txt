@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
+# Without a floor the dylib requires the build host's macOS. cmake-conan passes it on to OpenSSL.
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
 project(libdatachannel_jni C CXX)
 
 set(CMAKE_C_STANDARD 17)
