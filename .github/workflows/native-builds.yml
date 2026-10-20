@@ -242,7 +242,8 @@ jobs:
         run: |
           docker run --rm --platform "$PLATFORM" -v "$PWD:/work:ro" -w /work \
             -e CLASSIFIER "$RUNTIME" sh -ec '
-              apk add --no-cache openjdk17-jre-headless libstdc++ libssl3
+              # No libstdc++ or libgcc, like the eclipse-temurin Alpine JRE
+              apk add --no-cache openjdk17-jre-headless libssl3
               for mode in lazy eager; do
                 java -Xcheck:jni -cp "build/native-smoke/*:build/native-smoke/classes" \
                   tel.schich.libdatachannel.NativeLibrarySmoke "$CLASSIFIER" "$mode"
