@@ -71,6 +71,38 @@ public final class NativeTransportProbe {
         for (int length : new int[] {167, 178, 256}) run(certificate, key, fingerprint, length, false);
         run(certificate, key, fingerprint, 167, true);
         directPeer(certificate, key, fingerprint);
+        admission();
+    }
+
+    /** Requests that no admission key or peer authenticates never reach the handler. */
+    static void admission() throws Exception {
+        byte[] context = "context\0".getBytes(StandardCharsets.US_ASCII), secret = "admission secret".getBytes(StandardCharsets.US_ASCII);
+        String keyed = "keyedProbeUfrag";
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(secret, "HmacSHA256"));
+        mac.update(context);
+        String derived = Base64.getEncoder().encodeToString(Arrays.copyOf(mac.doFinal(keyed.getBytes(StandardCharsets.US_ASCII)), 24));
+        List<String> handled = new CopyOnWriteArrayList<>();
+        try (IceUdpMuxListener mux = new IceUdpMuxListener(LOOPBACK, PORT, Runnable::run, request -> {
+                handled.add(request.localUfrag()); return CompletableFuture.completedFuture(null);
+             });
+             DatagramSocket socket = new DatagramSocket(new InetSocketAddress(LOOPBACK, 0))) {
+            mux.setAdmission(context, Map.of("keyed", secret));
+            for (byte[] packet : List.of(binding(keyed, SERVER_PASSWORD), binding("unknownProbeUfrag", derived), binding(keyed, derived)))
+                socket.send(new DatagramPacket(packet, packet.length, LOOPBACK, PORT));
+            await(() -> handled.size() == 1, "the keyed request reaches the handler");
+            check(handled.equals(List.of(keyed)) && mux.statistics().rejected() >= 2, "forged and unknown requests are dropped natively");
+            Map<String, byte[]> tooMany = new HashMap<>();
+            for (int i = 0; i < 9; i++) tooMany.put("key" + i, secret);
+            boolean refused = false;
+            try { mux.setAdmission(context, tooMany); } catch (RuntimeException expected) { refused = true; }
+            check(refused, "invalid admission settings are refused");
+            mux.clearAdmission();
+            byte[] packet = binding("openProbeUfrag", SERVER_PASSWORD);
+            socket.send(new DatagramPacket(packet, packet.length, LOOPBACK, PORT));
+            await(() -> handled.size() == 2, "a cleared admission hands every request over again");
+        }
+        System.out.println("native-transport PASS admission=keyedOnly cleared=true");
     }
 
     /** A direct peer shares the listener's port and connects without admission; unknown ufrags still go to admission. */

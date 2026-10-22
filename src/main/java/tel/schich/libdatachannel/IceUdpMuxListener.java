@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -384,6 +385,31 @@ public final class IceUdpMuxListener implements AutoCloseable {
         return StunUdpMuxMonitor.fromListener(listenerId, serverHost, serverPort);
     }
 
+    /**
+     * Drops requests that neither a key nor a peer on this endpoint authenticates, natively and before the
+     * handler runs. A request whose local ufrag starts with a key's prefix authenticates with
+     * BASE64(HMAC-SHA256(secret, context || local ufrag)[0..24]). Secrets are copied. Limits: 8 keys,
+     * 1 to 16 character prefixes, 1 to 64 byte secrets and a 1024 byte context.
+     */
+    public synchronized void setAdmission(byte[] context, Map<String, byte[]> secretsByUfragPrefix) {
+        if (handle == 0) throw new IllegalStateException("ICE listener closed");
+        Objects.requireNonNull(context, "context");
+        String[] prefixes = new String[secretsByUfragPrefix.size()];
+        byte[][] secrets = new byte[prefixes.length][];
+        int i = 0;
+        for (Map.Entry<String, byte[]> key : secretsByUfragPrefix.entrySet()) {
+            prefixes[i] = Objects.requireNonNull(key.getKey(), "prefix");
+            secrets[i++] = Objects.requireNonNull(key.getValue(), "secret");
+        }
+        Util.wrapError("setAdmission", setAdmissionNative(listenerId, context, prefixes, secrets));
+    }
+
+    /** Hands every request to the handler again. */
+    public synchronized void clearAdmission() {
+        if (handle == 0) throw new IllegalStateException("ICE listener closed");
+        Util.wrapError("clearAdmission", setAdmissionNative(listenerId, null, null, null));
+    }
+
     /** @deprecated Use {@link #statistics()} for named counters. */
     @Deprecated
     public synchronized long[] stats() {
@@ -431,5 +457,7 @@ public final class IceUdpMuxListener implements AutoCloseable {
     private static native int attachNative(int handle, long requestId, int peer);
     private static native int rejectNative(int handle, long requestId);
     private static native long[] statsNative(int handle);
+    private static native int setAdmissionNative(int handle, byte @Nullable [] context,
+        String @Nullable [] prefixes, byte @Nullable [] @Nullable [] secrets);
     private static native int listenerIdNative(long handle);
 }
