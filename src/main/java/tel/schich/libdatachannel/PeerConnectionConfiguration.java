@@ -24,6 +24,7 @@ public class PeerConnectionConfiguration {
             false,
             false,
             false,
+            false,
             0,
             0,
             AUTO_MTU,
@@ -38,6 +39,7 @@ public class PeerConnectionConfiguration {
     final IceTransportPolicy iceTransportPolicy;
     final boolean enableIceTcp;
     final boolean enableIceUdpMux;
+    final boolean iceUdpMuxDirect;
     final boolean disableAutoNegotiation;
     final boolean forceMediaTransport;
     final int portRangeBegin;
@@ -45,7 +47,7 @@ public class PeerConnectionConfiguration {
     final int mtu;
     final int maxMessageSize;
 
-    private PeerConnectionConfiguration(List<URI> iceServers, @Nullable URI proxyServer, @Nullable InetAddress bindAddress, CertificateType certificateType, IceTransportPolicy iceTransportPolicy, boolean enableIceTcp, boolean enableIceUdpMux, boolean disableAutoNegotiation, boolean forceMediaTransport, int portRangeBegin, int portRangeEnd, int mtu, int maxMessageSize) {
+    private PeerConnectionConfiguration(List<URI> iceServers, @Nullable URI proxyServer, @Nullable InetAddress bindAddress, CertificateType certificateType, IceTransportPolicy iceTransportPolicy, boolean enableIceTcp, boolean enableIceUdpMux, boolean iceUdpMuxDirect, boolean disableAutoNegotiation, boolean forceMediaTransport, int portRangeBegin, int portRangeEnd, int mtu, int maxMessageSize) {
         this.iceServers = iceServers;
         this.proxyServer = proxyServer;
         this.bindAddress = bindAddress;
@@ -53,6 +55,7 @@ public class PeerConnectionConfiguration {
         this.iceTransportPolicy = iceTransportPolicy;
         this.enableIceTcp = enableIceTcp;
         this.enableIceUdpMux = enableIceUdpMux;
+        this.iceUdpMuxDirect = iceUdpMuxDirect;
         this.disableAutoNegotiation = disableAutoNegotiation;
         this.forceMediaTransport = forceMediaTransport;
         this.portRangeBegin = portRangeBegin;
@@ -76,7 +79,7 @@ public class PeerConnectionConfiguration {
                 newIceServers.add(iceServer);
             }
         }
-        return new PeerConnectionConfiguration(newIceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(newIceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public List<URI> iceServers() {
@@ -94,7 +97,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withProxyServer(URI proxyServer) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public Optional<URI> proxyServer() {
@@ -108,7 +111,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withBindAddress(InetAddress bindAddress) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public Optional<InetAddress> bindAddress() {
@@ -122,7 +125,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withCertificateType(CertificateType certificateType) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public CertificateType certificateType() {
@@ -137,7 +140,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration iceTransportPolicy(IceTransportPolicy iceTransportPolicy) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public IceTransportPolicy iceTransportPolicy() {
@@ -151,7 +154,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withEnableIceTcp(boolean enableIceTcp) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public boolean enableIceTcp() {
@@ -166,11 +169,27 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withEnableIceUdpMux(boolean enableIceUdpMux) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public boolean enableIceUdpMux() {
         return enableIceUdpMux;
+    }
+
+    /**
+     * if true, a multiplexed connection is matched by its ICE username fragment even when an {@link IceUdpMuxListener} listens on the
+     * same port, instead of going through that listener's admission. Such a peer cannot be the target of
+     * {@link IceUdpMuxListener.Acceptance#reuse} (ignored without enableIceUdpMux and with libnice as ICE backend)
+     *
+     * @param iceUdpMuxDirect whether to bypass a pending listener's admission
+     * @return fluent interface
+     */
+    public PeerConnectionConfiguration withIceUdpMuxDirect(boolean iceUdpMuxDirect) {
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+    }
+
+    public boolean iceUdpMuxDirect() {
+        return iceUdpMuxDirect;
     }
 
     /**
@@ -180,7 +199,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withDisableAutoNegotiation(boolean disableAutoNegotiation) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public boolean disableAutoNegotiation() {
@@ -194,7 +213,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withForceMediaTransport(boolean forceMediaTransport) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public boolean forceMediaTransport() {
@@ -209,7 +228,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withPortRangeBegin(int portRangeBegin) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public int portRangeBegin() {
@@ -224,7 +243,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withPortRangeEnd(int portRangeEnd) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public int portRangeEnd() {
@@ -238,7 +257,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withMtu(int mtu) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public int mtu() {
@@ -252,7 +271,7 @@ public class PeerConnectionConfiguration {
      * @return fluent interface
      */
     public PeerConnectionConfiguration withMaxMessageSize(int maxMessageSize) {
-        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
+        return new PeerConnectionConfiguration(iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy, enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin, portRangeEnd, mtu, maxMessageSize);
     }
 
     public int maxMessageSize() {

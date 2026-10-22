@@ -190,6 +190,7 @@ public class PeerConnection implements Closeable {
                 config.iceTransportPolicy.state,
                 config.enableIceTcp,
                 config.enableIceUdpMux,
+                config.iceUdpMuxDirect,
                 config.disableAutoNegotiation,
                 config.forceMediaTransport,
                 config.portRangeBegin,

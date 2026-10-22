@@ -64,6 +64,7 @@ static jint create_peer(JNIEnv* env, jclass clazz,
                         const jint iceTransportPolicy,
                         const jboolean enableIceTcp,
                         const jboolean enableIceUdpMux,
+                        const jboolean iceUdpMuxDirect,
                         const jboolean disableAutoNegotiation,
                         const jboolean forceMediaTransport,
                         const jint portRangeBegin, const jint portRangeEnd,
@@ -76,6 +77,7 @@ static jint create_peer(JNIEnv* env, jclass clazz,
     config.iceTransportPolicy = static_cast<rtcTransportPolicy>(iceTransportPolicy);
     config.enableIceTcp = static_cast<bool>(enableIceTcp);
     config.enableIceUdpMux = static_cast<bool>(enableIceUdpMux);
+    config.iceUdpMuxDirect = static_cast<bool>(iceUdpMuxDirect);
     config.disableAutoNegotiation = static_cast<bool>(disableAutoNegotiation);
     config.forceMediaTransport = static_cast<bool>(forceMediaTransport);
     config.portRangeBegin = portRangeBegin;
@@ -175,12 +177,13 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnection(JNIE
                                                                             const jint iceTransportPolicy,
                                                                             const jboolean enableIceTcp,
                                                                             const jboolean enableIceUdpMux,
+                                                                            const jboolean iceUdpMuxDirect,
                                                                             const jboolean disableAutoNegotiation,
                                                                             const jboolean forceMediaTransport,
                                                                             const jint portRangeBegin, const jint portRangeEnd,
                                                                             const jint mtu, const jint maxMessageSize) {
     return create_peer(env, clazz, iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy,
-                       enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
+                       enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
                        portRangeEnd, mtu, maxMessageSize, nullptr, nullptr, nullptr, nullptr);
 }
 
@@ -191,6 +194,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnectionWithI
                                                                             const jint iceTransportPolicy,
                                                                             const jboolean enableIceTcp,
                                                                             const jboolean enableIceUdpMux,
+                                                                            const jboolean iceUdpMuxDirect,
                                                                             const jboolean disableAutoNegotiation,
                                                                             const jboolean forceMediaTransport,
                                                                             const jint portRangeBegin, const jint portRangeEnd,
@@ -198,7 +202,7 @@ Java_tel_schich_libdatachannel_LibDataChannelNative_rtcCreatePeerConnectionWithI
                                                                             jstring certificateFile, jstring keyFile,
                                                                             jstring keyPassword) {
     return create_peer(env, clazz, iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy,
-                       enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
+                       enableIceTcp, enableIceUdpMux, iceUdpMuxDirect, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
                        portRangeEnd, mtu, maxMessageSize, certificateFile, keyFile, keyPassword, nullptr);
 }
 
@@ -484,8 +488,9 @@ extern "C" JNIEXPORT jintArray JNICALL Java_tel_schich_libdatachannel_IceUdpMuxL
     incoming.local_description.icePwd = !env->ExceptionCheck() ? env->GetStringUTFChars(localPassword, nullptr) : nullptr;
     jint status = EXCEPTION_THROWN;
     if (!env->ExceptionCheck()) {
+        // Prepared peers are admitted through the listener, never direct.
         status = create_peer(env, clazz, iceServers, proxyServer, bindAddress, certificateType, iceTransportPolicy,
-                             enableIceTcp, enableIceUdpMux, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
+                             enableIceTcp, enableIceUdpMux, JNI_FALSE, disableAutoNegotiation, forceMediaTransport, portRangeBegin,
                              portRangeEnd, mtu, maxMessageSize, certificateFile, keyFile, keyPassword, &incoming);
     }
     if (incoming.remote_sdp != nullptr) {

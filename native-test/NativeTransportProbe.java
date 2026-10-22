@@ -70,6 +70,37 @@ public final class NativeTransportProbe {
         closeDuringInitialization(certificate, key);
         for (int length : new int[] {167, 178, 256}) run(certificate, key, fingerprint, length, false);
         run(certificate, key, fingerprint, 167, true);
+        directPeer(certificate, key, fingerprint);
+    }
+
+    /** A direct peer shares the listener's port and connects without admission; unknown ufrags still go to admission. */
+    static void directPeer(Path certificate, Path key, String fingerprint) throws Exception {
+        String serverUfrag = "directServerUfrag";
+        AtomicInteger notifications = new AtomicInteger();
+        CountDownLatch opened = new CountDownLatch(1);
+        try (IceUdpMuxListener mux = new IceUdpMuxListener(LOOPBACK, PORT, Runnable::run, request -> {
+                notifications.incrementAndGet(); return CompletableFuture.completedFuture(null);
+             });
+             PeerConnection client = client();
+             DatagramSocket unknown = new DatagramSocket(new InetSocketAddress(LOOPBACK, 0))) {
+            PeerConnection host = PeerConnection.createPeer(PeerConnectionConfiguration.DEFAULT.withDisableAutoNegotiation(true)
+                .withBindAddress(LOOPBACK).withEnableIceUdpMux(true).withIceUdpMuxDirect(true)
+                .withPortRangeBegin(PORT).withPortRangeEnd(PORT), Runnable::run, certificate, key);
+            try {
+                host.onDataChannel.register((p, dc) -> opened.countDown());
+                client.createDataChannel("direct");
+                client.setLocalDescription("offer", CLIENT_UFRAG, CLIENT_PASSWORD);
+                host.setRemoteDescription(client.localDescription(), SessionDescriptionType.OFFER);
+                host.setLocalDescription("answer", serverUfrag, SERVER_PASSWORD);
+                client.setRemoteDescription(answer(serverUfrag, fingerprint), SessionDescriptionType.ANSWER);
+                check(opened.await(10, TimeUnit.SECONDS), "direct peer connects beside the pending listener");
+                check(notifications.get() == 0 && mux.statistics().mappedTuples() >= 1, "direct peer checks bypass admission");
+                byte[] packet = binding("unknownDirectUfrag", SERVER_PASSWORD);
+                unknown.send(new DatagramPacket(packet, packet.length, LOOPBACK, PORT));
+                await(() -> notifications.get() == 1, "unknown ufrag still reaches admission");
+            } finally { check(host.closeAndAwait(Duration.ofSeconds(5)), "direct peer cleanup"); }
+        }
+        System.out.println("native-transport PASS directPeer=connected admission=unknownOnly");
     }
 
     static byte[] binding(String localUfrag, String password) throws Exception {

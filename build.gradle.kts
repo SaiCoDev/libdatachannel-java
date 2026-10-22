@@ -531,7 +531,7 @@ val configureNativeProbe by tasks.registering(Exec::class) {
 }
 val compileNativeProbe by tasks.registering(Exec::class) {
     dependsOn(configureNativeProbe)
-    commandLine("cmake", "--build", "build/native-probe", "--target", "datachannel-java", "transport-teardown-test", "ice-udp-mux-pending-test", "candidate-pair-buffer-test", "mux-pending-test", "mux-pending-lifetime-test", "mux-authentication-test", "ice-attribute-limits-test", "-j2")
+    commandLine("cmake", "--build", "build/native-probe", "--target", "datachannel-java", "transport-teardown-test", "ice-udp-mux-pending-test", "candidate-pair-buffer-test", "mux-pending-test", "mux-pending-lifetime-test", "mux-authentication-test", "mux-direct-test", "ice-attribute-limits-test", "-j2")
 }
 val probeSourceSet = sourceSets.create("nativeProbe") {
     java.srcDir("native-test")
@@ -561,7 +561,7 @@ val probeEncryptedIdentity by tasks.registering(Exec::class) {
 }
 val runTransportNativeTests by tasks.registering(Exec::class) {
     dependsOn(compileNativeProbe)
-    commandLine("ctest", "--test-dir", "build/native-probe/libdatachannel", "--output-on-failure", "-R", "transport.teardown|mux.pending|mux.authentication|ice.attribute.limits")
+    commandLine("ctest", "--test-dir", "build/native-probe/libdatachannel", "--output-on-failure", "-R", "transport.teardown|mux.pending|mux.authentication|mux.direct|ice.attribute.limits")
 }
 tasks.register<JavaExec>("nativeTransportProbe") {
     dependsOn(runTransportNativeTests, probeIdentity, probeEncryptedIdentity, tasks.named(probeSourceSet.classesTaskName), "nativeCallbackCleanupProbe", "nativeCallbackDispatchProbe", "nativeLoggingProbe", "nativeStunMonitorProbe", "nativeCandidatePairBufferProbe")
