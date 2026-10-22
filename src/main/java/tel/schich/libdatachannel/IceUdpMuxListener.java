@@ -210,7 +210,7 @@ public final class IceUdpMuxListener implements AutoCloseable {
             });
         LibDataChannel.initialize();
         synchronized (this) {
-            handle = openNative(Objects.requireNonNull(bindAddress, "bindAddress").getHostAddress(), port,
+            handle = openNative(Util.bindAddress(Objects.requireNonNull(bindAddress, "bindAddress")), port,
                 maxPendingRequests, requestTimeoutMillis);
             if (handle == 0) {
                 dispatchQueue.shutdownNow();
@@ -434,14 +434,14 @@ public final class IceUdpMuxListener implements AutoCloseable {
             cancel(request, new CancellationException("ICE listener closed"));
     }
 
-    private native long openNative(String address, int port, int maxPendingRequests, int requestTimeoutMillis);
+    private native long openNative(@Nullable String address, int port, int maxPendingRequests, int requestTimeoutMillis);
     private static native void closeNative(long handle);
     private static int[] prepareNative(int handle, long requestId, PeerConnectionConfiguration config,
         String remoteDescription, String localUfrag, String localPassword,
         @Nullable String certificate, @Nullable String key, @Nullable String keyPassword) {
         return prepareConfiguredNative(handle, requestId, PeerConnection.iceUrisToStrings(config.iceServers),
             config.proxyServer == null ? null : config.proxyServer.toASCIIString(),
-            config.bindAddress == null ? null : config.bindAddress.getHostAddress(),
+            Util.bindAddress(config.bindAddress),
             config.certificateType.state, config.iceTransportPolicy.state, config.enableIceTcp,
             config.enableIceUdpMux, config.disableAutoNegotiation, config.forceMediaTransport,
             config.portRangeBegin, config.portRangeEnd, config.mtu, config.maxMessageSize,

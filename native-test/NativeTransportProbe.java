@@ -72,6 +72,30 @@ public final class NativeTransportProbe {
         run(certificate, key, fingerprint, 167, true);
         directPeer(certificate, key, fingerprint);
         admission();
+        wildcardShare();
+    }
+
+    /** A wildcard listener and wildcard or unbound peers on its port share one socket, so no peer fails to bind. */
+    static void wildcardShare() throws Exception {
+        InetAddress any = InetAddress.getByName("0.0.0.0");
+        List<PeerConnection> peers = new ArrayList<>();
+        try (IceUdpMuxListener mux = new IceUdpMuxListener(any, PORT, Runnable::run,
+                request -> CompletableFuture.completedFuture(null))) {
+            try {
+                PeerConnectionConfiguration config = PeerConnectionConfiguration.DEFAULT.withDisableAutoNegotiation(true)
+                    .withEnableIceUdpMux(true).withIceUdpMuxDirect(true).withPortRangeBegin(PORT).withPortRangeEnd(PORT);
+                for (PeerConnectionConfiguration each : List.of(config.withBindAddress(any), config)) {
+                    PeerConnection peer = PeerConnection.createPeer(each);
+                    peers.add(peer);
+                    peer.createDataChannel("share");
+                    peer.setLocalDescription("offer");
+                }
+                await(() -> mux.statistics().agents() == 2, "both peers join the wildcard listener's socket");
+            } finally {
+                for (PeerConnection peer : peers) check(peer.closeAndAwait(Duration.ofSeconds(5)), "wildcard peer cleanup");
+            }
+        }
+        System.out.println("native-transport PASS wildcardShare=oneSocket");
     }
 
     /** Requests that no admission key or peer authenticates never reach the handler. */

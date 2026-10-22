@@ -178,10 +178,7 @@ public class PeerConnection implements Closeable {
         if (config.proxyServer != null) {
             proxyServer = config.proxyServer.toASCIIString();
         }
-        String bindAddress = null;
-        if (config.bindAddress != null) {
-            bindAddress = config.bindAddress.getHostAddress();
-        }
+        String bindAddress = Util.bindAddress(config.bindAddress);
         int result = rtcCreatePeerConnectionWithIdentity(
                 iceUrisToStrings(config.iceServers),
                 proxyServer,

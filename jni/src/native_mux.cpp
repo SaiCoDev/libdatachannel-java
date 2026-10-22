@@ -57,8 +57,9 @@ extern "C" JNIEXPORT jlong JNICALL Java_tel_schich_libdatachannel_IceUdpMuxListe
     if (clazz != nullptr) {
         env->DeleteLocalRef(clazz);
     }
-    const char* host = !env->ExceptionCheck() ? env->GetStringUTFChars(address, nullptr) : nullptr;
-    if (host != nullptr && mux->owner != nullptr && mux->dispatch != nullptr) {
+    // A null address binds every address, the way peers on the same port do
+    const char* host = address != nullptr && !env->ExceptionCheck() ? env->GetStringUTFChars(address, nullptr) : nullptr;
+    if ((address == nullptr || host != nullptr) && mux->owner != nullptr && mux->dispatch != nullptr) {
         rtcIceUdpMuxListenerConfiguration config = {};
         config.bindAddress = host;
         config.port = static_cast<uint16_t>(port);

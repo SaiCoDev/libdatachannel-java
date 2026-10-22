@@ -26,7 +26,7 @@ public final class StunUdpMuxMonitor implements AutoCloseable {
     public StunUdpMuxMonitor(@Nullable InetAddress bindAddress, int localPort, String serverHost, int serverPort) {
         checkPort(localPort);
         checkServer(serverHost, serverPort);
-        handle = openNative(bindAddress == null ? null : bindAddress.getHostAddress(),
+        handle = openNative(Util.bindAddress(bindAddress),
             localPort, serverHost, serverPort);
         if (handle <= 0) throw new IllegalStateException("Failed to create STUN UDP mux monitor");
     }

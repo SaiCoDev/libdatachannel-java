@@ -7,6 +7,9 @@ import tel.schich.libdatachannel.exception.NotAvailableException;
 import tel.schich.libdatachannel.exception.TooSmallException;
 import tel.schich.libdatachannel.exception.UnknownFailureException;
 
+import org.eclipse.jdt.annotation.Nullable;
+
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -21,6 +24,13 @@ import static tel.schich.libdatachannel.exception.LibDataChannelException.ERR_SU
 import static tel.schich.libdatachannel.exception.LibDataChannelException.ERR_TOO_SMALL;
 
 class Util {
+    /**
+     * libjuice shares a UDP port by this exact string, so every listener, peer and monitor on a port derives it the
+     * same way. A wildcard means none: one dual-stack socket that falls back to IPv4.
+     */
+    static @Nullable String bindAddress(@Nullable InetAddress address) {
+        return address == null || address.isAnyLocalAddress() ? null : address.getHostAddress();
+    }
 
     static void ensureDirect(ByteBuffer buffer) {
         if (!buffer.isDirect()) {
